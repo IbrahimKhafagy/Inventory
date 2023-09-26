@@ -1,0 +1,67 @@
+version: '3.8'
+services:
+    web:
+      container_name: web-nginx
+      build:
+        context: .
+        dockerfile: nginx/Dockerfile
+      ports:
+        - "80:80"
+        - "443:443"
+      volumes:
+        - .:/code/
+      restart: unless-stopped
+
+
+    mysql:
+        image: mysql:8.0
+        container_name: mysql
+        environment:
+            MYSQL_DATABASE: chainnest
+            MYSQL_USER: user
+            MYSQL_ROOT: root
+            MYSQL_PASSWORD: "DZtLqb6MVkjzd7ax"
+            MYSQL_ROOT_PASSWORD: "DZtLqb6MVkjzd7ax"
+        volumes:
+            - ./storage/dbdata:/var/lib/mysql
+        ports:
+            -"3306"
+
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        container_name: phpmyadmin
+        links:
+          - mysql
+        environment:
+          PMA_HOST: mysql
+          PMA_PORT: 3306
+          PMA_ARBITRARY: 1
+          MYSQL_ROOT_PASSWORD: "DZtLqb6MVkjzd7ax"
+        restart: always
+        ports:
+          - 8081:80
+
+
+    main:
+        container_name: main
+        build:
+            context: .
+            dockerfile: Dockerfile
+        # command: 'php artisan serve --host=0.0.0.0'
+        working_dir: /code
+        volumes:
+            - ./:/code
+            -  /code/vendor
+        ports:
+            - 8181:8181
+        depends_on:
+            - mysql
+
+# networks:
+#   app-network:
+#     driver: bridge
+
+networks:
+  default:
+    external:
+      name: app-network
